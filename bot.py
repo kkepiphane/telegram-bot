@@ -5,6 +5,7 @@ import sqlite3
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+import asyncio
 
 # Configuration initiale
 load_dotenv()
@@ -284,19 +285,20 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"- Signalements : {reports}"
     )
 
-def main():
+async def main():
     init_db()
     
-    app = Application.builder().token(TOKEN).build()
+    # Création de l'application avec initialisation explicite
+    application = Application.builder().token(TOKEN).build()
     
     # Handlers principaux
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("stats", admin_stats))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("stats", admin_stats))
     
     # Handler de recherche
-    app.add_handler(CallbackQueryHandler(show_groups, pattern="search_all"))
-    app.add_handler(CallbackQueryHandler(lambda u, c: show_groups(u, c, 'FR'), pattern="search_fr"))
-    app.add_handler(CallbackQueryHandler(lambda u, c: show_groups(u, c, 'EN'), pattern="search_en"))
+    application.add_handler(CallbackQueryHandler(show_groups, pattern="search_all"))
+    application.add_handler(CallbackQueryHandler(lambda u, c: show_groups(u, c, 'FR'), pattern="search_fr"))
+    application.add_handler(CallbackQueryHandler(lambda u, c: show_groups(u, c, 'EN'), pattern="search_en"))
     
     # Handler d'ajout de groupe
     add_group_conv = ConversationHandler(
@@ -306,9 +308,11 @@ def main():
             GROUP_LINK: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_group_link)],
             GROUP_LANG: [CallbackQueryHandler(save_group, pattern="^lang_")]
         },
-        fallbacks=[CommandHandler("cancel", lambda u,c: ConversationHandler.END)]
+        fallbacks=[CommandHandler("cancel", lambda u,c: ConversationHandler.END)],
+        per_message=False,  # Important pour les conversations mixtes
+        per_user=True
     )
-    app.add_handler(add_group_conv)
+    application.add_handler(add_group_conv)
     
     # Handler de signalement
     report_conv = ConversationHandler(
@@ -319,13 +323,21 @@ def main():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, save_report)
             ]
         },
-        fallbacks=[CommandHandler("cancel", lambda u,c: ConversationHandler.END)]
+        fallbacks=[CommandHandler("cancel", lambda u,c: ConversationHandler.END)],
+        per_message=False,  # Important pour les conversations mixtes
+        per_user=True
     )
-    app.add_handler(report_conv)
+    application.add_handler(report_conv)
     
     # Démarrage du bot
     print("Bot démarré...")
-    app.run_polling()
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    
+    # Boucle infinie
+    while True:
+        await asyncio.sleep(3600)  # 1 heure
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
