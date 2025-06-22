@@ -4,19 +4,31 @@ from telegram.ext import ContextTypes
 
 async def is_valid_group(link: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
     try:
-        # Nettoyer le lien
-        if link.startswith('https://'):
-            clean_link = link.replace('https://', '')
-        else:
-            clean_link = link
-
-        if clean_link.startswith('t.me/'):
-            chat_id = '@' + clean_link.split('t.me/')[1]
+        # Nettoyage et extraction du username
+        if link.startswith('https://t.me/'):
+            username = link[13:]
+        elif link.startswith('t.me/'):
+            username = link[5:]
         else:
             return False
-
-        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        return True
+        
+        # Suppression des paramètres de l'URL
+        username = username.split('?')[0]
+        
+        # Vérification alternative sans nécessiter que le bot soit membre
+        try:
+            await context.bot.get_chat(f"@{username}")
+            return True
+        except Exception as e:
+            print(f"Impossible de vérifier le chat directement: {e}")
+            
+            # Deuxième méthode de vérification
+            try:
+                await context.bot.send_chat_action(chat_id=f"@{username}", action=ChatAction.TYPING)
+                return True
+            except:
+                return False
+                
     except Exception as e:
-        print(f"Validation du lien échouée: {e}")
+        print(f"Erreur de validation: {e}")
         return False

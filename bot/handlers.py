@@ -15,15 +15,17 @@ def setup_handlers(application: Application):
     application.add_handler(CommandHandler("start", start.start))
     application.add_handler(CommandHandler("stats", admin.admin_stats))
 
-    # Handler de recherche
+    # Handler pour le bouton Recherche (nouveau)
     application.add_handler(CallbackQueryHandler(
-        search.show_groups, pattern="search_all"))
-    application.add_handler(CallbackQueryHandler(
-        lambda u, c: search.show_groups(u, c, 'FR'), pattern="search_fr"))
-    application.add_handler(CallbackQueryHandler(
-        lambda u, c: search.show_groups(u, c, 'EN'), pattern="search_en"))
+        search.search_groups, pattern="^search$"))  # Notez le pattern "^search$"
 
-    
+    # Handlers pour les sous-options de recherche
+    application.add_handler(CallbackQueryHandler(
+        search.show_groups, pattern="^search_all$"))
+    application.add_handler(CallbackQueryHandler(
+        lambda u, c: search.show_groups(u, c, 'FR'), pattern="^search_fr$"))
+    application.add_handler(CallbackQueryHandler(
+        lambda u, c: search.show_groups(u, c, 'EN'), pattern="^search_en$"))
 
     # Handler d'ajout de groupe
     add_group_conv = ConversationHandler(
