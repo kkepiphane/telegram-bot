@@ -1,0 +1,14 @@
+setup.py
+bot/__init__.py
+bot/database.py
+bot/handlers.py
+bot/utils.py
+bot/commands/__init__.py
+bot/commands/groups.py
+bot/commands/reports.py
+bot/commands/search.py
+bot/commands/start.py
+otaku_finder.egg-info/PKG-INFO
+otaku_finder.egg-info/SOURCES.txt
+otaku_finder.egg-info/dependency_links.txt
+otaku_finder.egg-info/top_level.txt
